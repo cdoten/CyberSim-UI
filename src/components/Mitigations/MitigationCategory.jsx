@@ -75,7 +75,7 @@ const MitigationCategory = ({
         <Col xs={11}>
           <h4 className="m-0 font-weight-normal border-bottom border-primary w-100 text-uppercase">
             ALLOCATED <span className="font-weight-bold">{name}</span>{' '}
-            {getTextWithSynonyms('budget').toUpperCase()} :{' '}
+	    {getTextWithSynonyms('budget').toUpperCase()} :{' '}
             {numberToUsd(allocatedBudget)}
           </h4>
         </Col>

@@ -74,26 +74,29 @@ export const StaticDataProvider = ({ children }) => {
   // DICTIONARY SYNONYM GETTER
   const getTextWithSynonyms = useCallback(
     (text) => {
-      if (dictionaryLoading) {
-        return text;
-      }
 
-      // Create a regular expression to match all occurrences of the words
-      const regex = new RegExp(
-        Object.keys(dictionary).join('|'),
-        'gi',
-      );
+      // Always return a string
+      const input = String(text ?? '');
 
-      // Replace words with their synonyms
-      const replacedText = text.replace(regex, (match) => {
+      if (dictionaryLoading) return input;
+
+      const keys = Object.keys(dictionary || {});
+      if (keys.length === 0) return input;
+
+      // Escape regex special chars in dictionary keys
+      const escapedKeys = keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const regex = new RegExp(escapedKeys.join('|'), 'gi');
+
+      return input.replace(regex, (match) => {
         const synonym = dictionary[match.toLowerCase()];
+
+        // If no synonym found, keep original match
+        if (!synonym) return match;
 
         return match[0] === match[0].toUpperCase()
           ? synonym.charAt(0).toUpperCase() + synonym.slice(1)
           : synonym;
       });
-
-      return replacedText;
     },
     [dictionary, dictionaryLoading],
   );

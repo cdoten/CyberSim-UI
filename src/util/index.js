@@ -1,10 +1,16 @@
-export const numberToUsd = (num) =>
-  num.toLocaleString('en-US', {
+export const numberToUsd = (num) => {
+  if (num === null || num === undefined || num === '') return '$?';
+
+  const n = typeof num === 'number' ? num : Number(num);
+  if (!Number.isFinite(n)) return '$?';
+
+  return n.toLocaleString('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });
+};
 
 export const msToMinutesSeconds = (millis) => {
   let seconds = parseInt(((millis % 60000) / 1000).toFixed(0));
