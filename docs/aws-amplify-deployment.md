@@ -1,0 +1,134 @@
+# AWS Amplify Deployment (Recommended)
+
+This document describes how to deploy the CyberSim UI using **AWS
+Amplify Hosting**.
+
+Amplify provides a simplified workflow for hosting static web
+applications directly from a Git repository.
+
+## Overview
+
+Deployment flow:
+
+1.  Push code to GitHub
+2.  Amplify automatically builds the application
+3.  Amplify hosts the static site globally via CDN
+
+Benefits:
+
+-   Simpler than CodePipeline
+-   Automatic builds on commit
+-   Built‑in CDN
+-   Managed SSL certificates
+
+## Prerequisites
+
+-   GitHub repository containing the CyberSim UI
+-   AWS account
+-   Backend API deployed and reachable
+
+Backend optional for initial UI deployment (use placeholder API URL, eg https://example.invalid)
+
+## Required Environment Variable
+
+The UI must know where the backend API lives.
+
+    REACT_APP_API_URL
+
+Example:
+
+    REACT_APP_API_URL=https://api.example.org
+
+Note that REACT_APP_API_URL like all Amplify environmental variables is injected at build time.
+
+Changing it in Amplify requires a redeploy (new build).
+
+## Create Amplify App
+
+1.  Open AWS Console
+2.  Navigate to **AWS Amplify**
+3.  Click **Create App**
+4.  Choose:
+
+```{=html}
+<!-- -->
+```
+    Host web app
+
+5.  Select **GitHub** as the source provider.
+6.  Authorize AWS to access your repository.
+7.  Select repository:
+
+```{=html}
+<!-- -->
+```
+    CyberSim-UI
+
+8.  Select branch:
+
+```{=html}
+<!-- -->
+```
+    main
+
+## Build Settings
+
+Amplify should automatically detect a React application.
+
+Typical build settings:
+
+    npm ci
+    npm run build
+
+Build output directory:
+
+    build
+
+## Environment Variables
+
+Add the backend URL:
+
+    REACT_APP_API_URL=<backend_api_url>
+
+Example:
+
+    REACT_APP_API_URL=https://cybersim-api.example.org
+
+## Deploy
+
+After configuration:
+
+1.  Click **Save and Deploy**
+2.  Amplify will run the build
+3.  The site will be deployed automatically
+
+A public URL will be generated.
+
+Example:
+
+    https://main.<random>.amplifyapp.com
+
+## Custom Domain (Optional)
+
+Amplify supports custom domains.
+
+Steps:
+
+1.  Open Amplify app
+2.  Go to **Domain Management**
+3.  Add domain
+4.  Configure DNS records
+
+Amplify will automatically provision SSL certificates.
+
+## Updating the Application
+
+Future deployments are automatic.
+
+Workflow:
+
+1.  Commit code
+2.  Push to `main`
+3.  Amplify rebuilds and redeploys
+
+No manual infrastructure steps are required.
