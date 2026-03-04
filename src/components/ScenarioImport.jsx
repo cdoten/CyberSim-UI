@@ -14,7 +14,7 @@ const baseState = {
   password: '',
 };
 
-export default function Migrate() {
+export default function ScenarioImport() {
   const [state, setState] = useState(baseState);
   const [errors, setErrors] = useState({});
   const [isSuccess, setIsSuccess] = useState(false);
@@ -39,7 +39,7 @@ export default function Migrate() {
         ev.preventDefault();
         ev.stopPropagation();
         await axios.post(
-          `${process.env.REACT_APP_API_URL}/migrate`,
+          `${process.env.REACT_APP_API_URL}/scenario/import`,
           state,
         );
         setValidationError({});
@@ -78,14 +78,14 @@ export default function Migrate() {
         <Col xs={12} md={{ span: 8, offset: 2 }}>
           <Row className="font-weight-bold">
             <Col>
-              <h4>MIGRATE THE DATABASE</h4>
+              <h4>Import Scenario from Airtable</h4>
             </Col>
           </Row>
           <Form onSubmit={onSubmit}>
             <Form.Group>
               <Form.Label>
                 <h5 className="font-weight-normal mb-0">
-                  Master password:
+                  Migration password:
                 </h5>
               </Form.Label>
               <Form.Control
@@ -112,10 +112,10 @@ export default function Migrate() {
                 >
                   <h4 className="font-weight-normal mb-0">
                     {isLoading
-                      ? 'Ongoing migration ...'
+                      ? 'Import in process...'
                       : isSuccess
-                      ? 'Migrate the Database Again'
-                      : 'Migrate the Database'}
+                      ? 'Import the Scenario Base Again'
+                      : 'Import the Scenario Base'}
                   </h4>
                 </Button>
               </Col>
@@ -129,14 +129,14 @@ export default function Migrate() {
             )}
             {isSuccess && (
               <h3 className="text-success text-center">
-                The database was sucessfully migrated!
+                Airtable base successfuly imported
               </h3>
             )}
             {Boolean(validationError.errors?.length) && (
               <>
                 <h3 className="text-danger text-center">
                   {validationError.message ??
-                    'An unexpected error occured! Please contact the developers to fix it.'}
+                    'Unexpected error. Please contact system administrators with this information.'}
                 </h3>
                 <div>
                   {validationError.errors.map((error, index) => (

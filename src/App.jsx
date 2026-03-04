@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Game from './components/Game';
 import ErrorBox from './components/ErrorBox';
 import InfoBox from './components/InfoBox';
-import Migrate from './components/Migrate';
+import ScenarioImport from './components/ScenarioImport';
 import { StaticDataProvider } from './components/StaticDataProvider';
 
 const App = view(() => (
@@ -13,7 +13,7 @@ const App = view(() => (
     <StaticDataProvider>
       <Routes>
         <Route path="/" element={<Game />} />
-        <Route path="migrate" element={<Migrate />} />
+        <Route path="scenario/import" element={<ScenarioImport />} />
       </Routes>
       <ErrorBox />
       <InfoBox />

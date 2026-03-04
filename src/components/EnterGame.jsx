@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button, Container, Row, Col } from 'react-bootstrap';
 import { view } from '@risingstack/react-easy-state';
-import { Link } from 'react-router-dom';
 
 import { SocketEvents } from '../constants';
 import { gameStore } from './GameStore';
@@ -29,14 +28,6 @@ const EnterGame = view(() => {
 
   return (
     <Container fluid="md" className="mt-5 pt-5">
-      <Button
-        variant="outline-primary"
-        className="rounded-pill navigation"
-      >
-        <Link to="/migrate" className="button-link">
-          <h4 className="font-weight-normal mb-0">Migrate Game</h4>
-        </Link>
-      </Button>
       <Row>
         <Col xs={12} md={{ span: 8, offset: 2 }}>
           <Row className="font-weight-bold">
