@@ -1,9 +1,4 @@
-import React, {
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { keyBy as _keyBy } from 'lodash';
 
@@ -18,27 +13,55 @@ export const useStaticData = () => {
 };
 
 export const StaticDataProvider = ({ children }) => {
+  const apiBase = process.env.REACT_APP_API_URL;
+
+  // Backend reachability state (for clean UI messaging)
+  const [backendError, setBackendError] = useState('');
+  const [backendDown, setBackendDown] = useState(false);
+
+  const noteBackendDown = useCallback(
+    (err) => {
+      if (backendDown) return;
+
+      const msg = apiBase
+        ? `Backend not reachable at ${apiBase}`
+        : 'Missing REACT_APP_API_URL (set it in Amplify environment variables and redeploy).';
+
+      setBackendError(msg);
+      setBackendDown(true);
+
+      // Log once for debugging (don’t spam)
+      // eslint-disable-next-line no-console
+      console.error(err);
+    },
+    [apiBase, backendDown],
+  );
+
   // LOCATIONS
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locations, setLocations] = useState([]);
   useEffect(() => {
+    if (!apiBase || backendDown) {
+      setLocationsLoading(false);
+      return;
+    }
+
     setLocationsLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/locations`)
+      .get(`${apiBase}/locations`)
       .then(({ data }) => {
         setLocations(_keyBy(data, 'id'));
       })
-      .catch((e) => console.error(e))
+      .catch(noteBackendDown)
       .finally(() => setLocationsLoading(false));
-  }, [setLocations]);
+  }, [apiBase, backendDown, noteBackendDown]);
 
   // LOCATION NAME GETTER
   const getLocationNameByType = useCallback(
     (type, defaultName = 'HQ') => {
       return !locationsLoading
-        ? Object.values(locations).find(
-            (location) => location.type === type,
-          )?.name ?? defaultName
+        ? Object.values(locations).find((location) => location.type === type)
+            ?.name ?? defaultName
         : defaultName;
     },
     [locations, locationsLoading],
@@ -48,34 +71,34 @@ export const StaticDataProvider = ({ children }) => {
   const [dictionaryLoading, setDictionaryLoading] = useState(false);
   const [dictionary, setDictionary] = useState([]);
   useEffect(() => {
+    if (!apiBase || backendDown) {
+      setDictionaryLoading(false);
+      return;
+    }
+
     setDictionaryLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/dictionary`)
+      .get(`${apiBase}/dictionary`)
       .then(({ data }) => {
         const resultObject = data.reduce((acc, obj) => {
           const values = Object.values(obj);
-
           const key = values[0];
           const value = values[1];
 
-          // Check if the key already exists in the resultObject
-          if (!acc.hasOwnProperty(key)) {
+          if (!Object.prototype.hasOwnProperty.call(acc, key)) {
             acc[key] = value;
           }
-
           return acc;
         }, {});
         setDictionary(resultObject);
       })
-      .catch((e) => console.error(e))
+      .catch(noteBackendDown)
       .finally(() => setDictionaryLoading(false));
-  }, [setDictionary]);
+  }, [apiBase, backendDown, noteBackendDown]);
 
   // DICTIONARY SYNONYM GETTER
   const getTextWithSynonyms = useCallback(
     (text) => {
-
-      // Always return a string
       const input = String(text ?? '');
 
       if (dictionaryLoading) return input;
@@ -83,14 +106,13 @@ export const StaticDataProvider = ({ children }) => {
       const keys = Object.keys(dictionary || {});
       if (keys.length === 0) return input;
 
-      // Escape regex special chars in dictionary keys
-      const escapedKeys = keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const escapedKeys = keys.map((k) =>
+        k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+      );
       const regex = new RegExp(escapedKeys.join('|'), 'gi');
 
       return input.replace(regex, (match) => {
         const synonym = dictionary[match.toLowerCase()];
-
-        // If no synonym found, keep original match
         if (!synonym) return match;
 
         return match[0] === match[0].toUpperCase()
@@ -105,107 +127,148 @@ export const StaticDataProvider = ({ children }) => {
   const [systemsLoading, setSystemsLoading] = useState(false);
   const [systems, setSystems] = useState([]);
   useEffect(() => {
+    if (!apiBase || backendDown) {
+      setSystemsLoading(false);
+      return;
+    }
+
     setSystemsLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/systems`)
+      .get(`${apiBase}/systems`)
       .then(({ data }) => {
         setSystems(_keyBy(data, 'id'));
       })
-      .catch((e) => console.error(e))
+      .catch(noteBackendDown)
       .finally(() => setSystemsLoading(false));
-  }, [setSystems]);
+  }, [apiBase, backendDown, noteBackendDown]);
 
   // MITIGATIONS
   const [mitigationsLoading, setMitigationsLoading] = useState(false);
   const [mitigations, setMitigations] = useState([]);
   useEffect(() => {
+    if (!apiBase || backendDown) {
+      setMitigationsLoading(false);
+      return;
+    }
+
     setMitigationsLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/mitigations`)
+      .get(`${apiBase}/mitigations`)
       .then(({ data }) => {
         setMitigations(_keyBy(data, 'id'));
       })
-      .catch((e) => console.error(e))
+      .catch(noteBackendDown)
       .finally(() => setMitigationsLoading(false));
-  }, [setMitigations]);
+  }, [apiBase, backendDown, noteBackendDown]);
 
   // INJECTIONS
   const [injectionsLoading, setInjectionsLoading] = useState(false);
   const [injections, setInjections] = useState([]);
   useEffect(() => {
+    if (!apiBase || backendDown) {
+      setInjectionsLoading(false);
+      return;
+    }
+
     setInjectionsLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/injections`)
+      .get(`${apiBase}/injections`)
       .then(({ data }) => {
         setInjections(_keyBy(data, 'id'));
       })
-      .catch((e) => console.error(e))
+      .catch(noteBackendDown)
       .finally(() => setInjectionsLoading(false));
-  }, [setInjections]);
+  }, [apiBase, backendDown, noteBackendDown]);
 
   // RESPONSES
   const [responsesLoading, setResponsesLoading] = useState(false);
   const [responses, setResponses] = useState([]);
   useEffect(() => {
+    if (!apiBase || backendDown) {
+      setResponsesLoading(false);
+      return;
+    }
+
     setResponsesLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/responses`)
+      .get(`${apiBase}/responses`)
       .then(({ data }) => {
         setResponses(_keyBy(data, 'id'));
       })
-      .catch((e) => console.error(e))
+      .catch(noteBackendDown)
       .finally(() => setResponsesLoading(false));
-  }, [setResponses]);
+  }, [apiBase, backendDown, noteBackendDown]);
 
   // ACTIONS
   const [actionsLoading, setActionsLoading] = useState(false);
   const [actions, setActions] = useState([]);
   useEffect(() => {
+    if (!apiBase || backendDown) {
+      setActionsLoading(false);
+      return;
+    }
+
     setActionsLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/actions`)
+      .get(`${apiBase}/actions`)
       .then(({ data }) => {
         setActions(_keyBy(data, 'id'));
       })
-      .catch((e) => console.error(e))
+      .catch(noteBackendDown)
       .finally(() => setActionsLoading(false));
-  }, [setActions]);
+  }, [apiBase, backendDown, noteBackendDown]);
 
-  // CURVBALLS
+  // CURVEBALLS
   const [curveballsLoading, setCurveballsLoading] = useState(false);
   const [curveballs, setCurveballs] = useState([]);
   useEffect(() => {
+    if (!apiBase || backendDown) {
+      setCurveballsLoading(false);
+      return;
+    }
+
     setCurveballsLoading(true);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/curveballs`)
+      .get(`${apiBase}/curveballs`)
       .then(({ data }) => {
         setCurveballs(_keyBy(data, 'id'));
       })
-      .catch((e) => console.error(e))
+      .catch(noteBackendDown)
       .finally(() => setCurveballsLoading(false));
-  }, [setCurveballs]);
+  }, [apiBase, backendDown, noteBackendDown]);
 
   return (
     <StaticDataContext.Provider
       value={{
+        backendError,
+        backendDown,
+
         locationsLoading,
         locations,
         getLocationNameByType,
+
         dictionaryLoading,
         dictionary,
         getTextWithSynonyms,
+
         systemsLoading,
         systems,
+
         mitigationsLoading,
         mitigations,
+
         injectionsLoading,
         injections,
+
         responsesLoading,
         responses,
+
         actionsLoading,
         actions,
+
         curveballsLoading,
         curveballs,
+
         loading:
           locationsLoading ||
           dictionaryLoading ||

@@ -1,4 +1,4 @@
-# AWS Amplify Deployment (Recommended)
+# AWS Amplify Deployment (React UI)
 
 This document describes how to deploy the CyberSim UI using **AWS
 Amplify Hosting**.
@@ -27,8 +27,6 @@ Benefits:
 -   AWS account
 -   Backend API deployed and reachable
 
-Backend optional for initial UI deployment (use placeholder API URL, eg https://example.invalid)
-
 ## Required Environment Variable
 
 The UI must know where the backend API lives.
@@ -39,7 +37,13 @@ Example:
 
     REACT_APP_API_URL=https://api.example.org
 
-Note that REACT_APP_API_URL like all Amplify environmental variables is injected at build time.
+
+If deploying the UI before the backend exists, use a placeholder:
+
+    REACT_APP_API_URL=https://example.invalid
+
+Note that REACT_APP_API_URL, like all Amplify environmental variables,
+is injected at build time.
 
 Changing it in Amplify requires a redeploy (new build).
 
@@ -93,6 +97,24 @@ Add the backend URL:
 Example:
 
     REACT_APP_API_URL=https://cybersim-api.example.org
+
+
+## SPA Routing Rewrite Rule
+
+Because CyberSim uses React Router, Amplify must rewrite client-side routes
+to index.html without interfering with static assets.
+
+In **Amplify → App Settings → Rewrites and Redirects**, use this rule:
+
+```
+[
+  {
+    "source": "</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|ttf|map|json)$)([^.]+$)/>",
+    "target": "/index.html",
+    "status": "200"
+  }
+]
+```
 
 ## Deploy
 

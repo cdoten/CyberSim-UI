@@ -7,77 +7,8 @@ import { SocketEvents } from '../constants';
 
 let socket = null;
 
-// NOTE: gameStore is defined later; this helper avoids crashes if called too early
-function reportError(msg) {
-  // eslint-disable-next-line no-use-before-define
-  if (typeof gameStore !== 'undefined' && gameStore.popError) {
-    gameStore.popError(msg);
-  } else {
-    // last-resort: avoid throwing during module init
-    // (you can remove this once stable)
-    // eslint-disable-next-line no-console
-    console.error(msg);
-  }
-}
-
 function getApiUrl() {
   return process.env.REACT_APP_API_URL;
-}
-
-function ensureSocket() {
-  const apiUrl = getApiUrl();
-
-  if (!apiUrl) {
-    reportError(
-      'Missing REACT_APP_API_URL. Set it in Amplify env vars and redeploy.',
-    );
-    return null;
-  }
-
-  if (socket) return socket;
-
-  socket = io(apiUrl, {
-    transports: ['polling', 'websocket'],
-    reconnection: true,
-    reconnectionAttempts: 3,
-    timeout: 5000,
-  });
-
-  socket.on(SocketEvents.CONNECT, () => {
-    gameStore.socketConnected = true;
-  });
-
-  socket.on(SocketEvents.CONNECT_ERROR, () => {
-    gameStore.socketConnected = false;
-    gameStore.loading = false;
-    gameStore.popError(`Backend not reachable at ${apiUrl}`);
-  });
-
-  socket.on(SocketEvents.DISCONNECT, () => {
-    gameStore.socketConnected = false;
-  });
-
-  socket.on(SocketEvents.GAMEUPDATED, (g) => gameStore.setGame(g));
-
-  socket.on(SocketEvents.RECONNECT, () => {
-    if (gameStore.id) {
-      socket.emit(
-        SocketEvents.JOINGAME,
-        gameStore.id,
-        null,
-        null,
-        ({ error, game: g }) => {
-          if (!error) {
-            gameStore.setGame(g);
-          } else {
-            gameStore.popError(error);
-          }
-        },
-      );
-    }
-  });
-
-  return socket;
 }
 
 export const gameStore = store({
@@ -114,11 +45,17 @@ export const gameStore = store({
         );
       } else if (key === 'mitigations') {
         gameStore.mitigations = game.mitigations.reduce(
-          (acc, { mitigation_id, state }) => ({ ...acc, [mitigation_id]: state }),
+          (acc, { mitigation_id, state }) => ({
+            ...acc,
+            [mitigation_id]: state,
+          }),
           {},
         );
         gameStore.preparationMitigations = game.mitigations.reduce(
-          (acc, { mitigation_id, preparation }) => ({ ...acc, [mitigation_id]: preparation }),
+          (acc, { mitigation_id, preparation }) => ({
+            ...acc,
+            [mitigation_id]: preparation,
+          }),
           {},
         );
       } else if (key === 'injections') {
@@ -129,9 +66,72 @@ export const gameStore = store({
     });
   },
 
+  // Socket: create lazily, attach handlers once
+  ensureSocket: () => {
+    const apiUrl = getApiUrl();
+
+    if (!apiUrl) {
+      gameStore.popError(
+        'Missing REACT_APP_API_URL. Set it in Amplify env vars and redeploy.',
+      );
+      return null;
+    }
+
+    if (socket) return socket;
+
+    socket = io(apiUrl, {
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      timeout: 5000,
+    });
+
+    socket.on(SocketEvents.CONNECT, () => {
+      gameStore.socketConnected = true;
+    });
+
+    socket.on(SocketEvents.CONNECT_ERROR, () => {
+      gameStore.socketConnected = false;
+      // Don’t assume we should flip loading here; only specific actions control loading.
+      gameStore.popError(`Backend not reachable at ${apiUrl}`);
+    });
+
+    socket.on(SocketEvents.DISCONNECT, () => {
+      gameStore.socketConnected = false;
+    });
+
+    socket.on(SocketEvents.GAMEUPDATED, (g) => gameStore.setGame(g));
+
+    socket.on(SocketEvents.RECONNECT, () => {
+      if (gameStore.id) {
+        socket.emit(
+          SocketEvents.JOINGAME,
+          gameStore.id,
+          null,
+          null,
+          ({ error, game: g }) => {
+            if (!error) {
+              gameStore.setGame(g);
+            } else {
+              gameStore.popError(error);
+            }
+          },
+        );
+      }
+    });
+
+    return socket;
+  },
+
   emitEvent: (event, params, successInfo) => {
-    const s = ensureSocket();
+    const s = gameStore.ensureSocket();
     if (!s) return;
+
+    // If we’re not connected yet, fail loudly rather than silently.
+    if (!gameStore.socketConnected) {
+      gameStore.popError('Not connected to backend yet. Please try again.');
+      return;
+    }
 
     const callback = ({ error }) => {
       if (error) gameStore.popError(error);
@@ -142,7 +142,6 @@ export const gameStore = store({
     else s.emit(event, callback);
   },
 
-  // ACTIONS (put these back under actions:)
   actions: {
     enterGame: ({
       eventType,
@@ -151,10 +150,11 @@ export const gameStore = store({
       initialBudget = 6000,
       initialPollPercentage = 55,
     }) => {
-      const s = ensureSocket();
+      const s = gameStore.ensureSocket();
       if (!s) return;
 
       gameStore.loading = true;
+
       s.emit(
         eventType,
         gameId,
@@ -185,13 +185,25 @@ export const gameStore = store({
       ),
 
     performAction: (params) =>
-      gameStore.emitEvent(SocketEvents.PERFORMACTION, params, 'Action Performed'),
+      gameStore.emitEvent(
+        SocketEvents.PERFORMACTION,
+        params,
+        'Action Performed',
+      ),
 
     performCurveball: (params) =>
-      gameStore.emitEvent(SocketEvents.PERFORMCURVEBALL, params, 'Curveball Performed'),
+      gameStore.emitEvent(
+        SocketEvents.PERFORMCURVEBALL,
+        params,
+        'Curveball Performed',
+      ),
 
     restoreSystem: (params) =>
-      gameStore.emitEvent(SocketEvents.RESTORESYSTEM, params, 'System Restored'),
+      gameStore.emitEvent(
+        SocketEvents.RESTORESYSTEM,
+        params,
+        'System Restored',
+      ),
 
     startSimulation: () => gameStore.emitEvent(SocketEvents.STARTSIMULATION),
 
@@ -199,18 +211,28 @@ export const gameStore = store({
       gameStore.emitEvent(SocketEvents.DELIVERINJECTION, params),
 
     respondToInjection: (params) =>
-      gameStore.emitEvent(SocketEvents.RESPONDTOINJECTION, params, 'Response made'),
+      gameStore.emitEvent(
+        SocketEvents.RESPONDTOINJECTION,
+        params,
+        'Response made',
+      ),
 
     nonCorrectRespondToInjection: (params) =>
-      gameStore.emitEvent(SocketEvents.NONCORRECTRESPONDTOINJECTION, params, 'Response made'),
+      gameStore.emitEvent(
+        SocketEvents.NONCORRECTRESPONDTOINJECTION,
+        params,
+        'Response made',
+      ),
   },
 });
 
 // AUTO JOIN GAME FROM QUERY PARAMS
-const { gameId: gameIdFromQuery, ...newParams } = qs.parse(window.location.search);
+const { gameId: gameIdFromQuery, ...newParams } = qs.parse(
+  window.location.search,
+);
 
 if (gameIdFromQuery) {
-  const s = ensureSocket();
+  const s = gameStore.ensureSocket();
   if (!s) {
     gameStore.loading = false;
   } else {
@@ -223,7 +245,11 @@ if (gameIdFromQuery) {
       ({ error, game }) => {
         if (!error) {
           gameStore.setGame(game);
-          window.history.replaceState(null, null, `?${qs.stringify(newParams)}`);
+          window.history.replaceState(
+            null,
+            null,
+            `?${qs.stringify(newParams)}`,
+          );
           localStorage.setItem('gameId', gameIdFromQuery);
         } else {
           gameStore.popError(error);
