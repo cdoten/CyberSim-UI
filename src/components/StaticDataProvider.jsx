@@ -15,7 +15,6 @@ export const useStaticData = () => {
 export const StaticDataProvider = ({ children }) => {
   const apiBase = process.env.REACT_APP_API_URL;
 
-  // Backend reachability state (for clean UI messaging)
   const [backendError, setBackendError] = useState('');
   const [backendDown, setBackendDown] = useState(false);
 
@@ -30,17 +29,17 @@ export const StaticDataProvider = ({ children }) => {
       setBackendError(msg);
       setBackendDown(true);
 
-      // Log once for debugging (don’t spam)
       // eslint-disable-next-line no-console
       console.error(err);
     },
     [apiBase, backendDown],
   );
 
-/*
-  // LOCATIONS
+  // Optional resources should not block app startup
   const [locationsLoading, setLocationsLoading] = useState(false);
-  const [locations, setLocations] = useState([]);
+  const [locations, setLocations] = useState({});
+  const [locationsError, setLocationsError] = useState('');
+
   useEffect(() => {
     if (!apiBase || backendDown) {
       setLocationsLoading(false);
@@ -48,29 +47,34 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setLocationsLoading(true);
+    setLocationsError('');
+
     axios
       .get(`${apiBase}/locations`)
       .then(({ data }) => {
-        setLocations(_keyBy(data, 'id'));
+        setLocations(_keyBy(data || [], 'id'));
       })
-      .catch(noteBackendDown)
+      .catch((err) => {
+        setLocationsError('Failed to load locations');
+        console.error(err);
+      })
       .finally(() => setLocationsLoading(false));
-  }, [apiBase, backendDown, noteBackendDown]);
+  }, [apiBase, backendDown]);
 
-  // LOCATION NAME GETTER
-const getLocationNameByType = useCallback(
+  const getLocationNameByType = useCallback(
     (type, defaultName = 'HQ') => {
-      return !locationsLoading
-        ? Object.values(locations).find((location) => location.type === type)
-            ?.name ?? defaultName
-        : defaultName;
+      const match = Object.values(locations).find(
+        (location) => location.type === type,
+      );
+      return match?.name ?? defaultName;
     },
-    [locations, locationsLoading],
+    [locations],
   );
 
-  // DICTIONARY
   const [dictionaryLoading, setDictionaryLoading] = useState(false);
-  const [dictionary, setDictionary] = useState([]);
+  const [dictionary, setDictionary] = useState({});
+  const [dictionaryError, setDictionaryError] = useState('');
+
   useEffect(() => {
     if (!apiBase || backendDown) {
       setDictionaryLoading(false);
@@ -78,10 +82,12 @@ const getLocationNameByType = useCallback(
     }
 
     setDictionaryLoading(true);
+    setDictionaryError('');
+
     axios
       .get(`${apiBase}/dictionary`)
       .then(({ data }) => {
-        const resultObject = data.reduce((acc, obj) => {
+        const resultObject = (data || []).reduce((acc, obj) => {
           const values = Object.values(obj);
           const key = values[0];
           const value = values[1];
@@ -93,16 +99,16 @@ const getLocationNameByType = useCallback(
         }, {});
         setDictionary(resultObject);
       })
-      .catch(noteBackendDown)
+      .catch((err) => {
+        setDictionaryError('Failed to load dictionary');
+        console.error(err);
+      })
       .finally(() => setDictionaryLoading(false));
-  }, [apiBase, backendDown, noteBackendDown]);
+  }, [apiBase, backendDown]);
 
-  // DICTIONARY SYNONYM GETTER
   const getTextWithSynonyms = useCallback(
     (text) => {
       const input = String(text ?? '');
-
-      if (dictionaryLoading) return input;
 
       const keys = Object.keys(dictionary || {});
       if (keys.length === 0) return input;
@@ -121,13 +127,12 @@ const getLocationNameByType = useCallback(
           : synonym;
       });
     },
-    [dictionary, dictionaryLoading],
+    [dictionary],
   );
-*/
 
-  // SYSTEMS
+  // Required resources
   const [systemsLoading, setSystemsLoading] = useState(false);
-  const [systems, setSystems] = useState([]);
+  const [systems, setSystems] = useState({});
   useEffect(() => {
     if (!apiBase || backendDown) {
       setSystemsLoading(false);
@@ -138,15 +143,14 @@ const getLocationNameByType = useCallback(
     axios
       .get(`${apiBase}/systems`)
       .then(({ data }) => {
-        setSystems(_keyBy(data, 'id'));
+        setSystems(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setSystemsLoading(false));
   }, [apiBase, backendDown, noteBackendDown]);
 
-  // MITIGATIONS
   const [mitigationsLoading, setMitigationsLoading] = useState(false);
-  const [mitigations, setMitigations] = useState([]);
+  const [mitigations, setMitigations] = useState({});
   useEffect(() => {
     if (!apiBase || backendDown) {
       setMitigationsLoading(false);
@@ -157,15 +161,14 @@ const getLocationNameByType = useCallback(
     axios
       .get(`${apiBase}/mitigations`)
       .then(({ data }) => {
-        setMitigations(_keyBy(data, 'id'));
+        setMitigations(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setMitigationsLoading(false));
   }, [apiBase, backendDown, noteBackendDown]);
 
-  // INJECTIONS
   const [injectionsLoading, setInjectionsLoading] = useState(false);
-  const [injections, setInjections] = useState([]);
+  const [injections, setInjections] = useState({});
   useEffect(() => {
     if (!apiBase || backendDown) {
       setInjectionsLoading(false);
@@ -176,15 +179,14 @@ const getLocationNameByType = useCallback(
     axios
       .get(`${apiBase}/injections`)
       .then(({ data }) => {
-        setInjections(_keyBy(data, 'id'));
+        setInjections(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setInjectionsLoading(false));
   }, [apiBase, backendDown, noteBackendDown]);
 
-  // RESPONSES
   const [responsesLoading, setResponsesLoading] = useState(false);
-  const [responses, setResponses] = useState([]);
+  const [responses, setResponses] = useState({});
   useEffect(() => {
     if (!apiBase || backendDown) {
       setResponsesLoading(false);
@@ -195,15 +197,14 @@ const getLocationNameByType = useCallback(
     axios
       .get(`${apiBase}/responses`)
       .then(({ data }) => {
-        setResponses(_keyBy(data, 'id'));
+        setResponses(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setResponsesLoading(false));
   }, [apiBase, backendDown, noteBackendDown]);
 
-  // ACTIONS
   const [actionsLoading, setActionsLoading] = useState(false);
-  const [actions, setActions] = useState([]);
+  const [actions, setActions] = useState({});
   useEffect(() => {
     if (!apiBase || backendDown) {
       setActionsLoading(false);
@@ -214,15 +215,14 @@ const getLocationNameByType = useCallback(
     axios
       .get(`${apiBase}/actions`)
       .then(({ data }) => {
-        setActions(_keyBy(data, 'id'));
+        setActions(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setActionsLoading(false));
   }, [apiBase, backendDown, noteBackendDown]);
 
-  // CURVEBALLS
   const [curveballsLoading, setCurveballsLoading] = useState(false);
-  const [curveballs, setCurveballs] = useState([]);
+  const [curveballs, setCurveballs] = useState({});
   useEffect(() => {
     if (!apiBase || backendDown) {
       setCurveballsLoading(false);
@@ -233,25 +233,51 @@ const getLocationNameByType = useCallback(
     axios
       .get(`${apiBase}/curveballs`)
       .then(({ data }) => {
-        setCurveballs(_keyBy(data, 'id'));
+        setCurveballs(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setCurveballsLoading(false));
   }, [apiBase, backendDown, noteBackendDown]);
 
   return (
+
+  console.log('StaticDataProvider state', {
+    backendDown,
+    systemsLoading,
+    mitigationsLoading,
+    injectionsLoading,
+    responsesLoading,
+    actionsLoading,
+    curveballsLoading,
+    systemsCount: Object.keys(systems || {}).length,
+    mitigationsCount: Object.keys(mitigations || {}).length,
+    injectionsCount: Object.keys(injections || {}).length,
+    responsesCount: Object.keys(responses || {}).length,
+    actionsCount: Object.keys(actions || {}).length,
+    curveballsCount: Object.keys(curveballs || {}).length,
+    loading:
+      systemsLoading ||
+      mitigationsLoading ||
+      injectionsLoading ||
+      responsesLoading ||
+      curveballsLoading ||
+      actionsLoading,
+  });
+
     <StaticDataContext.Provider
       value={{
         backendError,
         backendDown,
 
-        //locationsLoading,
-        //locations,
-        //getLocationNameByType,
+        locationsLoading,
+        locations,
+        locationsError,
+        getLocationNameByType,
 
-        //dictionaryLoading,
-        //dictionary,
-        //getTextWithSynonyms,
+        dictionaryLoading,
+        dictionary,
+        dictionaryError,
+        getTextWithSynonyms,
 
         systemsLoading,
         systems,
@@ -272,8 +298,6 @@ const getLocationNameByType = useCallback(
         curveballs,
 
         loading:
-          //locationsLoading ||
-          //dictionaryLoading ||
           systemsLoading ||
           mitigationsLoading ||
           injectionsLoading ||
