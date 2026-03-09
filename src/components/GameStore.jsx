@@ -253,8 +253,8 @@ if (gameIdFromQuery) {
           localStorage.setItem('gameId', gameIdFromQuery);
         } else {
           gameStore.popError(error);
-          gameStore.loading = false;
         }
+        gameStore.loading = false;
       },
     );
   }
