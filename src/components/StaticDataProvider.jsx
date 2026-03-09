@@ -37,6 +37,7 @@ export const StaticDataProvider = ({ children }) => {
     [apiBase, backendDown],
   );
 
+/*
   // LOCATIONS
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locations, setLocations] = useState([]);
@@ -57,7 +58,7 @@ export const StaticDataProvider = ({ children }) => {
   }, [apiBase, backendDown, noteBackendDown]);
 
   // LOCATION NAME GETTER
-  const getLocationNameByType = useCallback(
+const getLocationNameByType = useCallback(
     (type, defaultName = 'HQ') => {
       return !locationsLoading
         ? Object.values(locations).find((location) => location.type === type)
@@ -122,6 +123,7 @@ export const StaticDataProvider = ({ children }) => {
     },
     [dictionary, dictionaryLoading],
   );
+*/
 
   // SYSTEMS
   const [systemsLoading, setSystemsLoading] = useState(false);
@@ -243,13 +245,13 @@ export const StaticDataProvider = ({ children }) => {
         backendError,
         backendDown,
 
-        locationsLoading,
-        locations,
-        getLocationNameByType,
+        //locationsLoading,
+        //locations,
+        //getLocationNameByType,
 
-        dictionaryLoading,
-        dictionary,
-        getTextWithSynonyms,
+        //dictionaryLoading,
+        //dictionary,
+        //getTextWithSynonyms,
 
         systemsLoading,
         systems,
@@ -270,8 +272,8 @@ export const StaticDataProvider = ({ children }) => {
         curveballs,
 
         loading:
-          locationsLoading ||
-          dictionaryLoading ||
+          //locationsLoading ||
+          //dictionaryLoading ||
           systemsLoading ||
           mitigationsLoading ||
           injectionsLoading ||
