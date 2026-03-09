@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import qs from 'query-string';
 import { view } from '@risingstack/react-easy-state';
 import { Spinner } from 'react-bootstrap';
@@ -15,6 +16,17 @@ const queryParams = qs.parse(window.location.search);
 const Game = view(() => {
   const { state: gameState, socketConnected } = gameStore;
   const { loading: loadingStaticData } = useStaticData();
+
+   useEffect(() => {
+      gameStore.ensureSocket();
+    }, []);
+
+  console.log('GAME STATE', {
+    loadingStaticData,
+    socketConnected,
+    gameState,
+    gameStoreLoading: gameStore.loading,
+  });
 
   if (loadingStaticData || !socketConnected) {
     return (
