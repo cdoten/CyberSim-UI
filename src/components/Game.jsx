@@ -21,13 +21,6 @@ const Game = view(() => {
       gameStore.ensureSocket();
     }, []);
 
-  console.log('GAME STATE', {
-    loadingStaticData,
-    socketConnected,
-    gameState,
-    gameStoreLoading: gameStore.loading,
-  });
-
   if (loadingStaticData || !socketConnected) {
     return (
       <div

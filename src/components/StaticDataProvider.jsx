@@ -239,29 +239,6 @@ export const StaticDataProvider = ({ children }) => {
       .finally(() => setCurveballsLoading(false));
   }, [apiBase, backendDown, noteBackendDown]);
 
-  console.log('Static data status', {
-    backendDown,
-    systemsLoading,
-    mitigationsLoading,
-    injectionsLoading,
-    responsesLoading,
-    actionsLoading,
-    curveballsLoading,
-    systemsCount: Object.keys(systems).length,
-    mitigationsCount: Object.keys(mitigations).length,
-    injectionsCount: Object.keys(injections).length,
-    responsesCount: Object.keys(responses).length,
-    actionsCount: Object.keys(actions).length,
-    curveballsCount: Object.keys(curveballs).length,
-    loading:
-      systemsLoading ||
-      mitigationsLoading ||
-      injectionsLoading ||
-      responsesLoading ||
-      curveballsLoading ||
-      actionsLoading,
-  });
-
   return (
     <StaticDataContext.Provider
       value={{
