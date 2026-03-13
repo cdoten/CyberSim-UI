@@ -8,7 +8,7 @@ This repository contains the CyberSim UI: a React application that provides the 
 
 ## Origins
 
-The CyberSim facilitation app was developed by Rising Stack for the National Democratic Institute (NDI), with support from Microsoft and the National Endowment for Democracy, as part of broader efforts to strengthen civic resilience in the digital age.
+The CyberSim facilitation app was originally developed by Rising Stack for the National Democratic Institute (NDI), with support from Microsoft and the National Endowment for Democracy, as part of broader efforts to strengthen civic resilience in the digital age.
 
 ## How CyberSim Works
 
