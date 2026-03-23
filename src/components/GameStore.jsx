@@ -4,7 +4,6 @@ import io from 'socket.io-client';
 import { keyBy as _keyBy } from 'lodash';
 
 import { SocketEvents } from '../constants';
-import { getScenarioSlug } from '../util/scenario';
 
 let socket = null;
 
@@ -81,7 +80,7 @@ export const gameStore = store({
     if (socket) return socket;
 
     socket = io(apiUrl, {
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       reconnection: true,
       reconnectionAttempts: 5,
       timeout: 5000,
@@ -161,7 +160,6 @@ export const gameStore = store({
         gameId,
         initialBudget,
         initialPollPercentage,
-        getScenarioSlug(),
         ({ error, game }) => {
           if (!error) {
             gameStore.setGame(game);
