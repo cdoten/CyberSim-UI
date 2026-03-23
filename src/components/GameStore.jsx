@@ -4,8 +4,9 @@ import io from 'socket.io-client';
 import { keyBy as _keyBy } from 'lodash';
 
 import { SocketEvents } from '../constants';
+import { getScenarioSlug } from '../util/scenario';
 
-const socket = io(process.env.REACT_APP_API_URL);
+const socket = io(process.env.REACT_APP_API_URL, { transports: ['websocket'] });
 
 export const gameStore = store({
   loading: false,
@@ -112,6 +113,7 @@ export const gameStore = store({
         gameId,
         initialBudget,
         initialPollPercentage,
+        getScenarioSlug(),
         ({ error, game }) => {
           if (!error) {
             gameStore.setGame(game);
