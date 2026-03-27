@@ -45,4 +45,18 @@ describe('getScenarioSlug', () => {
     delete process.env.REACT_APP_SCENARIO_SLUG;
     expect(getScenarioSlug()).toBe('cso');
   });
+
+  it('falls back to env var when hosted at a bare domain', () => {
+    delete window.location;
+    window.location = { hostname: 'cybersim.app' };
+    process.env.REACT_APP_SCENARIO_SLUG = 'tnr';
+    expect(getScenarioSlug()).toBe('tnr');
+  });
+
+  it('falls back to cso when hosted at a bare domain with no env var', () => {
+    delete window.location;
+    window.location = { hostname: 'cybersim.app' };
+    delete process.env.REACT_APP_SCENARIO_SLUG;
+    expect(getScenarioSlug()).toBe('cso');
+  });
 });
