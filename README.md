@@ -46,6 +46,37 @@ Example:
 
 ------------------------------------------------------------------------
 
+## Multi-Scenario Deployments
+
+CyberSim supports running multiple independent scenarios, each as a
+separate deployment pointing at the same codebase.
+
+The active scenario is determined automatically from the hostname
+subdomain:
+
+| Hostname | Scenario slug |
+|---|---|
+| `cso.cybersim.app` | `cso` |
+| `campaign.cybersim.app` | `campaign` |
+| `cybersim.app` (bare domain) | env var fallback |
+| `localhost` | env var fallback |
+
+The scenario slug is passed to the backend when starting or joining a
+game, so the backend can load the correct scenario content.
+
+For local development or bare-domain deployments, set the scenario
+explicitly:
+
+    REACT_APP_SCENARIO_SLUG=cso
+
+If neither the subdomain nor the env var is set, the UI defaults to
+`cso`.
+
+Each scenario requires its own backend deployment with its own Airtable
+base imported into the database. See the Scenario Import section below.
+
+------------------------------------------------------------------------
+
 ## Source Code Documentation
 
 For basic source code explanations see the wiki:
