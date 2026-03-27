@@ -14,6 +14,91 @@ The CyberSim facilitation app was originally developed by Rising Stack for the N
 
 CyberSim consists of two applications:
 
+-   **CyberSim Backend** --- Node.js API that manages the database and
+    scenario data
+-   **CyberSim UI** --- React application that runs the simulation
+    interface
+
+The backend stores game data in **PostgreSQL**, while the source
+scenario data is maintained in **Airtable**.
+
+The UI communicates with the backend API using the environment variable:
+
+    REACT_APP_API_URL
+
+Example:
+
+    REACT_APP_API_URL=http://localhost:3001
+
+------------------------------------------------------------------------
+
+## Source Code Documentation
+
+For basic source code explanations see the wiki:
+
+https://github.com/cdoten/CyberSim-UI/wiki
+
+------------------------------------------------------------------------
+
+# CyberSim UI Deployment Guide
+
+The CyberSim Game comprises two distinct applications:
+
+-   Node.js backend API
+-   React frontend UI
+
+This guide covers deployment of the **React UI application**.
+
+For instructions on deploying the backend application see:
+
+https://github.com/cdoten/CyberSim-Backend#readme
+
+------------------------------------------------------------------------
+
+# Deployment Steps
+
+Main deployment steps:
+
+1.  Set up the S3 bucket for static website hosting
+2.  Set up the CodePipeline
+3.  Set up the CodeBuild project
+
+------------------------------------------------------------------------
+
+## Multi-Scenario Deployments
+
+CyberSim supports running multiple independent scenarios, each as a
+separate deployment pointing at the same codebase.
+
+The active scenario is determined automatically from the hostname
+subdomain:
+
+| Hostname | Scenario slug |
+|---|---|
+| `cso.cybersim.app` | `cso` |
+| `campaign.cybersim.app` | `campaign` |
+| `cybersim.app` (bare domain) | env var fallback |
+| `localhost` | env var fallback |
+
+The scenario slug is passed to the backend when starting or joining a
+game, so the backend can load the correct scenario content.
+
+For local development or bare-domain deployments, set the scenario
+explicitly:
+
+    REACT_APP_SCENARIO_SLUG=cso
+
+If neither the subdomain nor the env var is set, the UI defaults to
+`cso`.
+
+Each scenario requires its own backend deployment with its own Airtable
+base imported into the database. See the Scenario Import section below.
+
+------------------------------------------------------------------------
+
+## Environment Component Naming Convention
+
+Environment component names follow this format:
 - **CyberSim Backend API** (Node.js / Express): manages game state, scenario data, and persistence
 - **CyberSim UI** (React): renders the simulation interface for facilitators and participants
 

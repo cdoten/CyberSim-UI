@@ -161,6 +161,8 @@ export const gameStore = store({
         gameId,
         initialBudget,
         initialPollPercentage,
+        // Pass the scenario slug so the backend loads the correct scenario content
+        // for this deployment. Resolved from the hostname subdomain (e.g. cso.cybersim.app → 'cso').
         getScenarioSlug(),
         ({ error, game }) => {
           if (!error) {
