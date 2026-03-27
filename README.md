@@ -127,6 +127,27 @@ Example (local development):
 REACT_APP_API_URL=http://localhost:3001
 ```
 
+## Multi-Scenario Support
+
+CyberSim supports running multiple scenarios from separate deployments. The active scenario is determined by the hostname:
+
+| Hostname | Resolved scenario |
+|---|---|
+| `cso.cybersim.app` | `cso` |
+| `campaign.cybersim.app` | `campaign` |
+| `cybersim.app` (bare domain) | env var fallback |
+| `localhost` | env var fallback |
+
+The subdomain is extracted from `window.location.hostname` and passed to the backend when starting or joining a game. The backend uses this slug to load the correct scenario content.
+
+For local development or bare-domain deployments, set the scenario explicitly:
+
+```
+REACT_APP_SCENARIO_SLUG=cso
+```
+
+If neither the subdomain nor the env var is set, the UI defaults to `cso`.
+
 ## Requirements
 
 - Node.js (v22 recommended)
