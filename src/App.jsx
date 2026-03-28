@@ -13,7 +13,7 @@ const App = view(() => (
     <StaticDataProvider>
       <Routes>
         <Route path="/" element={<Game />} />
-        <Route path="scenario/import" element={<ScenarioImport />} />
+        <Route path="admin/scenarios/import" element={<ScenarioImport />} />
       </Routes>
       <ErrorBox />
       <InfoBox />

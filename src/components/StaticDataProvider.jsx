@@ -1,6 +1,21 @@
+/**
+ * Provide scenario-scoped static game data to the React app.
+ *
+ * What it does:
+ * - Resolves the active scenario slug from the current hostname
+ * - Fetches static scenario resources from the backend
+ * - Exposes loading state, lookup helpers, and fetched data through context
+ *
+ * Important notes:
+ * - For normal game play, the scenario slug is derived from the subdomain.
+ * - Every static-data request includes scenarioSlug so the backend can return
+ *   only the content for the active scenario.
+ */
+
 import React, { useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { keyBy as _keyBy } from 'lodash';
+import { getScenarioSlug } from '../util/scenario';
 
 const StaticDataContext = React.createContext(null);
 
@@ -14,6 +29,7 @@ export const useStaticData = () => {
 
 export const StaticDataProvider = ({ children }) => {
   const apiBase = process.env.REACT_APP_API_URL;
+  const scenarioSlug = getScenarioSlug();
 
   const [backendError, setBackendError] = useState('');
   const [backendDown, setBackendDown] = useState(false);
@@ -35,10 +51,16 @@ export const StaticDataProvider = ({ children }) => {
     [apiBase, backendDown],
   );
 
-  // Optional resources should not block app startup
+  const fetchScenarioResource = useCallback(
+    async (resourcePath) =>
+      axios.get(`${apiBase}${resourcePath}`, {
+        params: { scenarioSlug },
+      }),
+    [apiBase, scenarioSlug],
+  );
+
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locations, setLocations] = useState({});
-  const [locationsError, setLocationsError] = useState('');
 
   useEffect(() => {
     if (!apiBase || backendDown) {
@@ -47,19 +69,14 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setLocationsLoading(true);
-    setLocationsError('');
 
-    axios
-      .get(`${apiBase}/locations`)
+    fetchScenarioResource('/locations')
       .then(({ data }) => {
         setLocations(_keyBy(data || [], 'id'));
       })
-      .catch((err) => {
-        setLocationsError('Failed to load locations');
-        console.error(err);
-      })
+      .catch(noteBackendDown)
       .finally(() => setLocationsLoading(false));
-  }, [apiBase, backendDown]);
+  }, [apiBase, backendDown, fetchScenarioResource, noteBackendDown]);
 
   const getLocationNameByType = useCallback(
     (type, defaultName = 'HQ') => {
@@ -73,7 +90,6 @@ export const StaticDataProvider = ({ children }) => {
 
   const [dictionaryLoading, setDictionaryLoading] = useState(false);
   const [dictionary, setDictionary] = useState({});
-  const [dictionaryError, setDictionaryError] = useState('');
 
   useEffect(() => {
     if (!apiBase || backendDown) {
@@ -82,10 +98,8 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setDictionaryLoading(true);
-    setDictionaryError('');
 
-    axios
-      .get(`${apiBase}/dictionary`)
+    fetchScenarioResource('/dictionary')
       .then(({ data }) => {
         const resultObject = (data || []).reduce((acc, obj) => {
           const values = Object.values(obj);
@@ -99,12 +113,9 @@ export const StaticDataProvider = ({ children }) => {
         }, {});
         setDictionary(resultObject);
       })
-      .catch((err) => {
-        setDictionaryError('Failed to load dictionary');
-        console.error(err);
-      })
+      .catch(noteBackendDown)
       .finally(() => setDictionaryLoading(false));
-  }, [apiBase, backendDown]);
+  }, [apiBase, backendDown, fetchScenarioResource, noteBackendDown]);
 
   const getTextWithSynonyms = useCallback(
     (text) => {
@@ -130,7 +141,6 @@ export const StaticDataProvider = ({ children }) => {
     [dictionary],
   );
 
-  // Required resources
   const [systemsLoading, setSystemsLoading] = useState(false);
   const [systems, setSystems] = useState({});
   useEffect(() => {
@@ -140,14 +150,13 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setSystemsLoading(true);
-    axios
-      .get(`${apiBase}/systems`)
+    fetchScenarioResource('/systems')
       .then(({ data }) => {
         setSystems(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setSystemsLoading(false));
-  }, [apiBase, backendDown, noteBackendDown]);
+  }, [apiBase, backendDown, fetchScenarioResource, noteBackendDown]);
 
   const [mitigationsLoading, setMitigationsLoading] = useState(false);
   const [mitigations, setMitigations] = useState({});
@@ -158,14 +167,13 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setMitigationsLoading(true);
-    axios
-      .get(`${apiBase}/mitigations`)
+    fetchScenarioResource('/mitigations')
       .then(({ data }) => {
         setMitigations(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setMitigationsLoading(false));
-  }, [apiBase, backendDown, noteBackendDown]);
+  }, [apiBase, backendDown, fetchScenarioResource, noteBackendDown]);
 
   const [injectionsLoading, setInjectionsLoading] = useState(false);
   const [injections, setInjections] = useState({});
@@ -176,14 +184,13 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setInjectionsLoading(true);
-    axios
-      .get(`${apiBase}/injections`)
+    fetchScenarioResource('/injections')
       .then(({ data }) => {
         setInjections(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setInjectionsLoading(false));
-  }, [apiBase, backendDown, noteBackendDown]);
+  }, [apiBase, backendDown, fetchScenarioResource, noteBackendDown]);
 
   const [responsesLoading, setResponsesLoading] = useState(false);
   const [responses, setResponses] = useState({});
@@ -194,14 +201,13 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setResponsesLoading(true);
-    axios
-      .get(`${apiBase}/responses`)
+    fetchScenarioResource('/responses')
       .then(({ data }) => {
         setResponses(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setResponsesLoading(false));
-  }, [apiBase, backendDown, noteBackendDown]);
+  }, [apiBase, backendDown, fetchScenarioResource, noteBackendDown]);
 
   const [actionsLoading, setActionsLoading] = useState(false);
   const [actions, setActions] = useState({});
@@ -212,14 +218,13 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setActionsLoading(true);
-    axios
-      .get(`${apiBase}/actions`)
+    fetchScenarioResource('/actions')
       .then(({ data }) => {
         setActions(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setActionsLoading(false));
-  }, [apiBase, backendDown, noteBackendDown]);
+  }, [apiBase, backendDown, fetchScenarioResource, noteBackendDown]);
 
   const [curveballsLoading, setCurveballsLoading] = useState(false);
   const [curveballs, setCurveballs] = useState({});
@@ -230,29 +235,28 @@ export const StaticDataProvider = ({ children }) => {
     }
 
     setCurveballsLoading(true);
-    axios
-      .get(`${apiBase}/curveballs`)
+    fetchScenarioResource('/curveballs')
       .then(({ data }) => {
         setCurveballs(_keyBy(data || [], 'id'));
       })
       .catch(noteBackendDown)
       .finally(() => setCurveballsLoading(false));
-  }, [apiBase, backendDown, noteBackendDown]);
+  }, [apiBase, backendDown, fetchScenarioResource, noteBackendDown]);
 
   return (
     <StaticDataContext.Provider
-      value={{
+            value={{
+        scenarioSlug,
+
         backendError,
         backendDown,
 
         locationsLoading,
         locations,
-        locationsError,
         getLocationNameByType,
 
         dictionaryLoading,
         dictionary,
-        dictionaryError,
         getTextWithSynonyms,
 
         systemsLoading,
@@ -274,6 +278,8 @@ export const StaticDataProvider = ({ children }) => {
         curveballs,
 
         loading:
+          locationsLoading ||
+          dictionaryLoading ||
           systemsLoading ||
           mitigationsLoading ||
           injectionsLoading ||
