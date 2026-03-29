@@ -9,13 +9,15 @@ import { useStaticData } from '../StaticDataProvider';
 
 const Header = view(({ activeTab, setActiveTab }) => {
   const { id } = gameStore;
-  const { getLocationNameByType } = useStaticData();
+  const { getLocationNameByType, scenarioName } = useStaticData();
 
   return (
     <div className="position-sticky bg-white text-center simulation-menu shadow">
       <Row className="m-0">
         <Col xs={12} className="p-0 d-flex justify-content-center">
-          <h4 className="my-1 font-weight-bold">{id}</h4>
+          <h4 className="my-1 font-weight-bold">
+            {id}{scenarioName && ` — ${scenarioName}`}
+          </h4>
         </Col>
       </Row>
       <Row className="m-0 border-primary border-bottom border-top shadow-sm">

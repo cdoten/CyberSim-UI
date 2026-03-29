@@ -1,3 +1,12 @@
+/**
+ * Admin form for importing a scenario from Airtable.
+ *
+ * Important notes:
+ * - Submits to the backend admin import endpoint.
+ * - Requires both scenarioSlug and the scenario import password.
+ * - This is an admin workflow component, not part of normal game play.
+ */
+
 import React, { useState, useCallback } from 'react';
 import {
   Form,
@@ -9,8 +18,10 @@ import {
 } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { getScenarioSlug } from '../util/scenario';
 
 const baseState = {
+  scenarioSlug: getScenarioSlug(),
   password: '',
 };
 
@@ -23,13 +34,21 @@ export default function ScenarioImport() {
 
   const onChange = useCallback(
     (ev) => {
+      setIsSuccess(false);
       const { name, value } = ev.target;
-      setState({ ...state, [name]: value });
+      setState((previousState) => ({
+        ...previousState,
+        [name]: value,
+      }));
+
       if (errors?.[name]) {
-        setErrors({ ...errors, [errors.name]: undefined });
+        setErrors((previousErrors) => ({
+          ...previousErrors,
+          [name]: undefined,
+        }));
       }
     },
-    [state, errors],
+    [errors],
   );
 
   const onSubmit = useCallback(
@@ -38,15 +57,21 @@ export default function ScenarioImport() {
         setLoading(true);
         ev.preventDefault();
         ev.stopPropagation();
+
         await axios.post(
-          `${process.env.REACT_APP_API_URL}/scenario/import`,
-          state,
+          `${process.env.REACT_APP_API_URL}/admin/scenarios/import`,
+          {
+            scenarioSlug: state.scenarioSlug.trim(),
+            password: state.password,
+          },
         );
+
         setValidationError({});
         setErrors({});
         setIsSuccess(true);
       } catch (err) {
         const error = err?.response?.data;
+
         if (error?.validation) {
           setValidationError(error);
           setErrors({});
@@ -56,6 +81,7 @@ export default function ScenarioImport() {
           }
           setValidationError({});
         }
+
         setIsSuccess(false);
       } finally {
         setLoading(false);
@@ -66,14 +92,12 @@ export default function ScenarioImport() {
 
   return (
     <Container fluid="md" className="mt-5 pt-5">
-      <Button
-        variant="outline-primary"
-        className="rounded-pill navigation"
-      >
+      <Button variant="outline-primary" className="rounded-pill navigation">
         <Link to="/" className="button-link">
           <h4 className="font-weight-normal mb-0">Go Back</h4>
         </Link>
       </Button>
+
       <Row>
         <Col xs={12} md={{ span: 8, offset: 2 }}>
           <Row className="font-weight-bold">
@@ -81,11 +105,31 @@ export default function ScenarioImport() {
               <h4>Import Scenario from Airtable</h4>
             </Col>
           </Row>
+
           <Form onSubmit={onSubmit}>
             <Form.Group>
               <Form.Label>
+                <h5 className="font-weight-normal mb-0">Scenario slug:</h5>
+              </Form.Label>
+              <Form.Control
+                type="text"
+                name="scenarioSlug"
+                value={state.scenarioSlug}
+                onChange={onChange}
+                autoComplete="off"
+                style={{ fontSize: '1.125rem' }}
+                isInvalid={errors?.scenarioSlug}
+                placeholder="e.g. cso"
+              />
+              <Form.Control.Feedback type="invalid" tooltip>
+                {errors?.scenarioSlug}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group className="mt-3">
+              <Form.Label>
                 <h5 className="font-weight-normal mb-0">
-                  Migration password:
+                  Scenario import password:
                 </h5>
               </Form.Label>
               <Form.Control
@@ -101,37 +145,40 @@ export default function ScenarioImport() {
                 {errors?.password}
               </Form.Control.Feedback>
             </Form.Group>
-            
+
             <Row className="my-4">
               <Col>
                 <Button
                   variant="outline-primary"
                   className="rounded-pill w-100"
                   type="submit"
-                  disabled={!state.password || isLoading}
+                  disabled={
+                    !state.scenarioSlug.trim() || !state.password || isLoading
+                  }
                 >
                   <h4 className="font-weight-normal mb-0">
                     {isLoading
                       ? 'Import in process...'
                       : isSuccess
-                      ? 'Import the Scenario Base Again'
-                      : 'Import the Scenario Base'}
+                      ? 'Import the Scenario Again'
+                      : 'Import Scenario'}
                   </h4>
                 </Button>
               </Col>
             </Row>
           </Form>
+
           <div className="pt-3">
             {errors?.message && (
-              <h3 className="text-danger text-center">
-                {errors.message}
-              </h3>
+              <h3 className="text-danger text-center">{errors.message}</h3>
             )}
+
             {isSuccess && (
               <h3 className="text-success text-center">
-                Airtable base successfuly imported
+                Scenario successfully imported from Airtable
               </h3>
             )}
+
             {Boolean(validationError.errors?.length) && (
               <>
                 <h3 className="text-danger text-center">
@@ -145,15 +192,12 @@ export default function ScenarioImport() {
                       variant="danger"
                       dismissible
                       onClose={() =>
-                        setValidationError(
-                          (previousValidationErrors) => ({
-                            ...previousValidationErrors,
-                            errors:
-                              previousValidationErrors.errors.filter(
-                                (err) => err !== error,
-                              ),
-                          }),
-                        )
+                        setValidationError((previousValidationErrors) => ({
+                          ...previousValidationErrors,
+                          errors: previousValidationErrors.errors.filter(
+                            (err) => err !== error,
+                          ),
+                        }))
                       }
                     >
                       <Alert.Heading>{error.message}</Alert.Heading>
