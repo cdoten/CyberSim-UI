@@ -59,6 +59,15 @@ export const StaticDataProvider = ({ children }) => {
     [apiBase, scenarioSlug],
   );
 
+  const [scenarioName, setScenarioName] = useState('');
+
+  useEffect(() => {
+    if (!apiBase || backendDown) return;
+    fetchScenarioResource('/scenario')
+      .then(({ data }) => setScenarioName(data?.name || scenarioSlug))
+      .catch(() => setScenarioName(scenarioSlug));
+  }, [apiBase, backendDown, fetchScenarioResource, scenarioSlug]);
+
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locations, setLocations] = useState({});
 
@@ -247,6 +256,7 @@ export const StaticDataProvider = ({ children }) => {
     <StaticDataContext.Provider
             value={{
         scenarioSlug,
+        scenarioName,
 
         backendError,
         backendDown,

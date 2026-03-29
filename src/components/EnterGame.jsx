@@ -14,7 +14,7 @@ const EnterGame = view(() => {
     actions: { enterGame },
   } = gameStore;
 
-  const { getTextWithSynonyms } = useStaticData();
+  const { getTextWithSynonyms, scenarioName } = useStaticData();
 
   const [gameId, setGameId] = useState(gameIdFromLocalStorage || '');
   const [rememberGameId, setRememberGameId] = useState(
@@ -32,9 +32,18 @@ const EnterGame = view(() => {
         <Col xs={12} md={{ span: 8, offset: 2 }}>
           <Row className="font-weight-bold">
             <Col>
-              <h4>ENTER GAME</h4>
+              <h4>Create or Join a CyberSim Game</h4>
             </Col>
           </Row>
+          {scenarioName && (
+            <Row className="mb-3">
+              <Col>
+                <h5 className="font-weight-normal text-muted">
+                  <em>Scenario:</em> {scenarioName}
+                </h5>
+              </Col>
+            </Row>
+          )}
           <Form
             onSubmit={(event) => {
               event.preventDefault();
