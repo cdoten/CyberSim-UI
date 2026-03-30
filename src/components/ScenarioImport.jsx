@@ -1,13 +1,4 @@
-/**
- * Admin form for importing a scenario from Airtable.
- *
- * Important notes:
- * - Submits to the backend admin import endpoint.
- * - Requires both scenarioSlug and the scenario import password.
- * - This is an admin workflow component, not part of normal game play.
- */
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Form,
   Button,
@@ -21,16 +12,40 @@ import axios from 'axios';
 import { getScenarioSlug } from '../util/scenario';
 
 const baseState = {
-  scenarioSlug: getScenarioSlug(),
+  scenarioSlug: '',
   password: '',
 };
 
 export default function ScenarioImport() {
   const [state, setState] = useState(baseState);
+  const [availableScenarios, setAvailableScenarios] = useState([]);
+  const [scenariosLoading, setScenariosLoading] = useState(true);
   const [errors, setErrors] = useState({});
   const [isSuccess, setIsSuccess] = useState(false);
   const [validationError, setValidationError] = useState({});
   const [isLoading, setLoading] = useState(false);
+
+  useEffect(() => {
+    axios
+      .get(`${process.env.REACT_APP_API_URL}/admin/scenarios`)
+      .then(({ data }) => {
+        setAvailableScenarios(data.scenarios || []);
+        if (data.scenarios?.length === 1) {
+          setState((prev) => ({ ...prev, scenarioSlug: data.scenarios[0] }));
+        } else {
+          const slug = getScenarioSlug();
+          if ((data.scenarios || []).includes(slug)) {
+            setState((prev) => ({ ...prev, scenarioSlug: slug }));
+          }
+        }
+      })
+      .catch(() => {
+        setAvailableScenarios([]);
+      })
+      .finally(() => {
+        setScenariosLoading(false);
+      });
+  }, []);
 
   const onChange = useCallback(
     (ev) => {
@@ -90,6 +105,8 @@ export default function ScenarioImport() {
     [state],
   );
 
+  const noScenariosConfigured = !scenariosLoading && availableScenarios.length === 0;
+
   return (
     <Container fluid="md" className="mt-5 pt-5">
       <Button variant="outline-primary" className="rounded-pill navigation">
@@ -109,27 +126,47 @@ export default function ScenarioImport() {
           <Form onSubmit={onSubmit}>
             <Form.Group>
               <Form.Label>
-                <h5 className="font-weight-normal mb-0">Scenario slug:</h5>
+                <h5 className="font-weight-normal mb-0">Scenario:</h5>
               </Form.Label>
-              <Form.Control
-                type="text"
-                name="scenarioSlug"
-                value={state.scenarioSlug}
-                onChange={onChange}
-                autoComplete="off"
-                style={{ fontSize: '1.125rem' }}
-                isInvalid={errors?.scenarioSlug}
-                placeholder="e.g. cso"
-              />
+              {noScenariosConfigured ? (
+                <Form.Control
+                  as="select"
+                  disabled
+                  style={{ fontSize: '1.125rem' }}
+                >
+                  <option>No scenarios configured on this server</option>
+                </Form.Control>
+              ) : (
+                <Form.Control
+                  as="select"
+                  name="scenarioSlug"
+                  value={state.scenarioSlug}
+                  onChange={onChange}
+                  disabled={scenariosLoading}
+                  style={{ fontSize: '1.125rem' }}
+                  isInvalid={errors?.scenarioSlug}
+                >
+                  {availableScenarios.length > 1 && (
+                    <option value="">
+                      {scenariosLoading ? 'Loading…' : '— select a scenario —'}
+                    </option>
+                  )}
+                  {availableScenarios.map((slug) => (
+                    <option key={slug} value={slug}>
+                      {slug}
+                    </option>
+                  ))}
+                </Form.Control>
+              )}
               <Form.Control.Feedback type="invalid" tooltip>
                 {errors?.scenarioSlug}
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mt-3">
+            <Form.Group>
               <Form.Label>
                 <h5 className="font-weight-normal mb-0">
-                  Scenario import password:
+                  Import password:
                 </h5>
               </Form.Label>
               <Form.Control
@@ -152,9 +189,7 @@ export default function ScenarioImport() {
                   variant="outline-primary"
                   className="rounded-pill w-100"
                   type="submit"
-                  disabled={
-                    !state.scenarioSlug.trim() || !state.password || isLoading
-                  }
+                  disabled={!state.scenarioSlug || !state.password || isLoading || noScenariosConfigured}
                 >
                   <h4 className="font-weight-normal mb-0">
                     {isLoading
