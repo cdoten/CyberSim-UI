@@ -246,6 +246,7 @@ if (gameIdFromQuery) {
       gameIdFromQuery,
       null,
       null,
+      getScenarioSlug(),
       ({ error, game }) => {
         if (!error) {
           gameStore.setGame(game);
