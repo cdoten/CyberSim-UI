@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Game from './components/Game';
 import ErrorBox from './components/ErrorBox';
 import InfoBox from './components/InfoBox';
-import ScenarioImport from './components/ScenarioImport';
+import AdminApp from './components/admin/AdminApp';
 import { StaticDataProvider } from './components/StaticDataProvider';
 
 const App = view(() => (
@@ -13,7 +13,7 @@ const App = view(() => (
     <StaticDataProvider>
       <Routes>
         <Route path="/" element={<Game />} />
-        <Route path="admin/scenarios/import" element={<ScenarioImport />} />
+        <Route path="admin/*" element={<AdminApp />} />
       </Routes>
       <ErrorBox />
       <InfoBox />
