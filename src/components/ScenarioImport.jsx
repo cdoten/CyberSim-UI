@@ -29,12 +29,16 @@ export default function ScenarioImport() {
     axios
       .get(`${process.env.REACT_APP_API_URL}/admin/scenarios`)
       .then(({ data }) => {
-        setAvailableScenarios(data.scenarios || []);
-        if (data.scenarios?.length === 1) {
-          setState((prev) => ({ ...prev, scenarioSlug: data.scenarios[0] }));
+        // API returns objects with { slug, name, ... }; extract just the slug
+        const slugs = (data.scenarios || []).map((s) =>
+          typeof s === 'string' ? s : s.slug,
+        );
+        setAvailableScenarios(slugs);
+        if (slugs.length === 1) {
+          setState((prev) => ({ ...prev, scenarioSlug: slugs[0] }));
         } else {
           const slug = getScenarioSlug();
-          if ((data.scenarios || []).includes(slug)) {
+          if (slugs.includes(slug)) {
             setState((prev) => ({ ...prev, scenarioSlug: slug }));
           }
         }
