@@ -110,6 +110,7 @@ export const gameStore = store({
           gameStore.id,
           null,
           null,
+          getScenarioSlug(),
           ({ error, game: g }) => {
             if (!error) {
               gameStore.setGame(g);
